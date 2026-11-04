@@ -10,5 +10,5 @@
   "max_novas_seguidas": 30,
   "antigas_entre_novas": 2,
   "intervalo_varredura_segundos": 5,
-  "url_convidados": "https://bugijo.github.io/FotoLoop/web/convidados/"
+  "url_convidados": "https://script.google.com/macros/s/SEU_CODIGO/exec"
 }

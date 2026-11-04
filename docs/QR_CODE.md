@@ -1,6 +1,6 @@
 # QR Code para os convidados
 
-O QR Code leva à página de envio: `https://bugijo.github.io/FotoLoop/web/convidados/`.
+O QR Code leva à página de envio, que é o endereço `/exec` do Apps Script (veja `CONFIGURAR_APPS_SCRIPT.md`). Use sempre esse endereço, não o do GitHub Pages.
 
 ## Gerar o QR Code definitivo
 

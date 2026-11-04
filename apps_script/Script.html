@@ -1,9 +1,9 @@
+<script>
 (function () {
   'use strict';
 
-  var CONFIG = window.FOTOLOOP_CONFIG || {};
   var TAMANHO_MAXIMO = 12 * 1024 * 1024;
-  var TEMPO_LIMITE_MS = 120000;
+  var TEMPO_LIMITE_MS = 150000;
 
   var MENSAGENS = {
     recebimento_encerrado: 'O envio de fotos já foi encerrado. Obrigada por participar!',
@@ -12,8 +12,9 @@
     arquivo_vazio: 'Essa foto está vazia. Escolha outra, por favor.',
     formato_invalido: 'Esse arquivo não é uma foto compatível. Use JPG, PNG, WebP ou HEIC.',
     pedido_invalido: 'Não recebemos sua foto. Tente de novo.',
+    nao_verificada: 'Não conseguimos confirmar que sua foto foi salva. Tente de novo.',
     pagina_nao_configurada: 'A página ainda não está pronta. Avise a organização da festa.',
-    falha_envio: 'Sem conexão com a internet. Verifique o sinal e tente de novo.'
+    falha_envio: 'Não foi possível enviar agora. Verifique o sinal e tente de novo.'
   };
 
   var estado = { arquivo: null, tipo: null, urlPrevia: null, enviando: false, codigoErro: null };
@@ -136,28 +137,29 @@
     return btoa(partes.join(''));
   }
 
+  // Envio pelo próprio Apps Script (google.script.run): sem requisição entre domínios.
+  // Se o tempo acabar, a foto pode ter chegado: o reenvio é seguro, pois a foto é identificada pelo conteúdo.
   function enviarPedido(pedido) {
-    var controle = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var temporizador = setTimeout(function () { if (controle) controle.abort(); }, TEMPO_LIMITE_MS);
-    return fetch(CONFIG.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(pedido),
-      signal: controle ? controle.signal : undefined
-    }).then(function (resposta) {
-      return resposta.json();
-    }).then(function (dados) {
-      clearTimeout(temporizador);
-      return dados;
-    }, function (erro) {
-      clearTimeout(temporizador);
-      throw erro;
+    return new Promise(function (resolver, rejeitar) {
+      var temporizador = setTimeout(function () {
+        rejeitar({ codigo: 'falha_envio' });
+      }, TEMPO_LIMITE_MS);
+      google.script.run
+        .withSuccessHandler(function (dados) {
+          clearTimeout(temporizador);
+          resolver(dados);
+        })
+        .withFailureHandler(function () {
+          clearTimeout(temporizador);
+          rejeitar({ codigo: 'falha_envio' });
+        })
+        .enviarFoto(pedido);
     });
   }
 
   function enviar() {
     if (estado.enviando || !estado.arquivo) return;
-    if (!CONFIG.endpoint) return mostrarErro('pagina_nao_configurada');
+    if (!window.google || !google.script || !google.script.run) return mostrarErro('pagina_nao_configurada');
 
     estado.enviando = true;
     mostrarTela('envio');
@@ -179,8 +181,9 @@
       })
       .then(enviarPedido)
       .then(function (resposta) {
-        if (!resposta || !resposta.ok) {
-          throw { codigo: (resposta && resposta.codigo) || 'pedido_invalido' };
+        // Só mostra "recebida" com a confirmação real do servidor (arquivo salvo no Drive).
+        if (!resposta || !resposta.ok || resposta.verificado !== true) {
+          throw { codigo: (resposta && resposta.codigo) || 'nao_verificada' };
         }
         mostrarSucesso(resposta.duplicada);
       })
@@ -224,3 +227,4 @@
   $('btn-outra').addEventListener('click', reiniciar);
   $('btn-tentar').addEventListener('click', aoTentarNovamente);
 })();
+</script>

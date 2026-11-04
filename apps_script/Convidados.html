@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <base target="_top">
+  <title>Lúcia 60 anos — Envie sua foto</title>
+  <?!= include('Estilo'); ?>
+</head>
+<body>
+  <main class="cartao">
+    <header class="topo">
+      <p class="selo">60 anos de</p>
+      <h1 class="nome">LÚCIA</h1>
+      <p class="subtitulo">Envie sua foto para o telão!</p>
+    </header>
+
+    <section id="tela-inicio">
+      <button id="btn-camera" class="botao grande">📷 TIRAR FOTO</button>
+      <button id="btn-galeria" class="botao grande secundario">🖼️ ESCOLHER FOTO DO CELULAR</button>
+      <input type="file" id="entrada-camera" accept="image/*" capture="environment" hidden>
+      <input type="file" id="entrada-galeria" accept="image/*" hidden>
+
+      <details class="ajuda">
+        <summary>Tirou foto com filtro do Instagram?</summary>
+        <ol>
+          <li>No Instagram, toque em salvar (ícone de seta para baixo) para guardar a foto no celular.</li>
+          <li>Volte aqui e toque em <strong>ESCOLHER FOTO DO CELULAR</strong>.</li>
+          <li>Escolha a foto que você salvou.</li>
+        </ol>
+      </details>
+
+      <p class="aviso">
+        Sua foto será mostrada no telão da festa e guardada para o álbum da Lúcia.
+      </p>
+    </section>
+
+    <section id="tela-previa" hidden>
+      <p class="titulo-tela">Ficou boa?</p>
+      <div class="moldura-previa">
+        <img id="previa" alt="Prévia da sua foto" hidden>
+        <p id="previa-indisponivel" class="pequeno" hidden>
+          Não conseguimos mostrar a prévia neste aparelho, mas sua foto será enviada normalmente.
+        </p>
+      </div>
+      <button id="btn-enviar" class="botao grande">ENVIAR FOTO</button>
+      <button id="btn-cancelar" class="botao grande secundario">CANCELAR</button>
+    </section>
+
+    <section id="tela-envio" hidden>
+      <div class="carregando" aria-hidden="true"></div>
+      <p class="titulo-tela">Enviando sua foto…</p>
+      <p class="pequeno">Não feche esta página até aparecer a confirmação.</p>
+    </section>
+
+    <section id="tela-sucesso" hidden>
+      <p class="titulo-tela">🎉 Foto recebida!</p>
+      <p id="mensagem-sucesso" class="pequeno"></p>
+      <button id="btn-outra" class="botao grande">ENVIAR OUTRA FOTO</button>
+    </section>
+
+    <section id="tela-erro" hidden>
+      <p class="titulo-tela">Ops!</p>
+      <p id="mensagem-erro" class="pequeno"></p>
+      <button id="btn-tentar" class="botao grande">TENTAR NOVAMENTE</button>
+    </section>
+  </main>
+  <?!= include('Script'); ?>
+</body>
+</html>

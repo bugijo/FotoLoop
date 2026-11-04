@@ -1,8 +1,9 @@
 /**
- * FotoLoop — receptor de fotografias (Google Apps Script).
+ * FotoLoop — Google Apps Script: página dos convidados e recebimento das fotos.
  *
+ * A página é servida pelo próprio Apps Script (HtmlService) e envia as fotos com
+ * google.script.run. Assim não há requisição entre domínios (sem CORS).
  * Publicação: veja docs/CONFIGURAR_APPS_SCRIPT.md
- * Roda com as permissões da conta do proprietário; convidados não fazem login.
  * Nunca coloque senhas, tokens ou chaves neste arquivo.
  */
 
@@ -34,29 +35,36 @@ function configurarPastaDoEvento() {
   return pasta.getUrl();
 }
 
-/** Consulta de status (GET ?acao=status). Também usada pela página dos convidados. */
+/**
+ * Entrada da web: serve a página dos convidados.
+ * ?acao=status devolve JSON (usado para conferir a implantação).
+ */
 function doGet(e) {
   try {
-    const acao = (e && e.parameter && e.parameter.acao) || 'status';
-    if (acao !== 'status') {
-      return resposta_(falha_('acao_desconhecida', 'Pedido não reconhecido.'));
+    if (e && e.parameter && e.parameter.acao === 'status') {
+      const pasta = pastaDoEvento_();
+      return resposta_({ ok: true, recebendo: recebendoFotos_(pasta) });
     }
-    const pasta = pastaDoEvento_();
-    return resposta_({ ok: true, recebendo: recebendoFotos_(pasta) });
+    return HtmlService.createTemplateFromFile('Convidados')
+      .evaluate()
+      .setTitle('Lúcia 60 anos — Envie sua foto')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
   } catch (erro) {
     console.error(erro);
     return resposta_(falha_('erro_interno', 'Serviço indisponível no momento.'));
   }
 }
 
-/** Recebe uma fotografia (POST, corpo JSON enviado como text/plain). */
-function doPost(e) {
+/**
+ * Chamada pela página com google.script.run. Só devolve ok:true e verificado:true
+ * depois de confirmar que o arquivo existe no Drive com o tamanho correto.
+ */
+function enviarFoto(pedido) {
   try {
-    const pedido = JSON.parse(e.postData.contents);
-    return resposta_(receberFoto_(pedido));
+    return receberFoto_(pedido);
   } catch (erro) {
     console.error(erro);
-    return resposta_(falha_('pedido_invalido', 'Não recebemos sua foto. Tente de novo.'));
+    return falha_('erro_interno', 'Não foi possível salvar sua foto. Tente de novo.');
   }
 }
 
@@ -85,7 +93,7 @@ function receberFoto_(pedido) {
     return falha_('formato_invalido', 'Esse arquivo não é uma foto compatível. Use JPG, PNG, WebP ou HEIC.');
   }
 
-  // O nome é derivado do conteúdo: a mesma foto enviada duas vezes não gera cópia.
+  // O nome vem do conteúdo: a mesma foto enviada duas vezes não gera cópia.
   const sha256 = hexSha256_(bytes);
   const identificador = 'FL_' + sha256.substring(0, 16);
   const nomeArquivo = identificador + '.' + tipo.extensao;
@@ -94,35 +102,56 @@ function receberFoto_(pedido) {
   const trava = LockService.getScriptLock();
   trava.waitLock(25000);
   try {
-    if (pasta.getFilesByName(nomeArquivo).hasNext()) {
-      const arquivoExistente = pasta.getFilesByName(nomeArquivo).next();
-      garantirMetadados_(pasta, identificador, {
-        identificador: identificador,
-        nome_original: nomeOriginal,
-        tipo: tipo.mime,
-        tamanho_bytes: bytes.length,
-        sha256: sha256,
-        enviado_em: new Date().toISOString(),
-        id_drive: arquivoExistente.getId()
-      });
-      return { ok: true, duplicada: true, identificador: identificador, mensagem: 'Esta foto já estava no álbum. Obrigada!' };
+    const existentes = pasta.getFilesByName(nomeArquivo);
+    if (existentes.hasNext()) {
+      const existente = existentes.next();
+      const metadados = montarMetadados_(identificador, nomeOriginal, tipo, bytes.length, sha256, existente.getId());
+      garantirMetadados_(pasta, identificador, metadados);
+      return resultadoVerificado_(existente, bytes.length, true, identificador,
+        'Esta foto já estava no álbum. Obrigada!');
     }
 
     const arquivo = pasta.createFile(Utilities.newBlob(bytes, tipo.mime, nomeArquivo));
-    const metadados = {
-      identificador: identificador,
-      nome_original: nomeOriginal,
-      tipo: tipo.mime,
-      tamanho_bytes: bytes.length,
-      sha256: sha256,
-      enviado_em: new Date().toISOString(),
-      id_drive: arquivo.getId()
-    };
-    garantirMetadados_(pasta, identificador, metadados);
-    return { ok: true, duplicada: false, identificador: identificador, mensagem: 'Foto recebida!' };
+    garantirMetadados_(pasta, identificador,
+      montarMetadados_(identificador, nomeOriginal, tipo, bytes.length, sha256, arquivo.getId()));
+    return resultadoVerificado_(arquivo, bytes.length, false, identificador,
+      'Foto salva com segurança. Obrigada!');
   } finally {
     trava.releaseLock();
   }
+}
+
+/** Confirma no Drive que o arquivo existe e tem o tamanho enviado antes de dizer "recebida". */
+function resultadoVerificado_(arquivo, tamanhoEsperado, duplicada, identificador, mensagem) {
+  let conferido = null;
+  try {
+    conferido = DriveApp.getFileById(arquivo.getId());
+  } catch (erro) {
+    conferido = null;
+  }
+  if (!conferido || conferido.getSize() !== tamanhoEsperado) {
+    return falha_('nao_verificada', 'Não conseguimos confirmar o salvamento. Tente de novo.');
+  }
+  return {
+    ok: true,
+    verificado: true,
+    duplicada: duplicada,
+    identificador: identificador,
+    id_drive: arquivo.getId(),
+    mensagem: mensagem
+  };
+}
+
+function montarMetadados_(identificador, nomeOriginal, tipo, tamanho, sha256, idDrive) {
+  return {
+    identificador: identificador,
+    nome_original: nomeOriginal,
+    tipo: tipo.mime,
+    tamanho_bytes: tamanho,
+    sha256: sha256,
+    enviado_em: new Date().toISOString(),
+    id_drive: idDrive
+  };
 }
 
 function pastaDoEvento_() {
@@ -213,7 +242,7 @@ function nomeSeguro_(nome) {
 }
 
 function falha_(codigo, mensagem) {
-  return { ok: false, codigo: codigo, mensagem: mensagem };
+  return { ok: false, verificado: false, codigo: codigo, mensagem: mensagem };
 }
 
 function resposta_(objeto) {

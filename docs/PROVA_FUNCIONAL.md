@@ -24,14 +24,14 @@ Página dos convidados, executada no navegador em largura de celular (375 px): l
 
 Protocolo de envio: a página foi testada contra um receptor **simulado** (não é o Apps Script). Ele recebeu `text/plain` com os campos `nome`, `tipo`, `tamanho`, `sha256` e `dados`, com assinatura JPEG e hash corretos. Executado: OK.
 
-GitHub Pages publicado: `https://bugijo.github.io/FotoLoop/web/convidados/` responde 200. A página ainda não envia fotos até `config.js` receber a URL do Apps Script.
+GitHub Pages publicado: `https://bugijo.github.io/FotoLoop/web/convidados/` responde 200 e serve apenas o redirecionamento para o Apps Script.
 
 ## Manual (ainda não executado)
 
 ### Fase 1 — prova funcional
 
 - [ ] Publicar o Apps Script conforme `CONFIGURAR_APPS_SCRIPT.md`.
-- [ ] Preencher `web/convidados/config.js` com a URL `/exec` e publicar no GitHub Pages.
+- [ ] Preencher `web/convidados/config.js` (`paginaApps`) com a URL `/exec` e publicar no GitHub Pages.
 - [ ] Abrir a página no **iPhone** e enviar uma foto real (HEIC).
 - [ ] Abrir a página num **Android** (ou Xiaomi) e enviar uma foto real (JPEG).
 - [ ] Confirmar que a foto aparece na pasta **FotoLoop - Lucia 60 anos** do Drive.
@@ -65,5 +65,6 @@ GitHub Pages publicado: `https://bugijo.github.io/FotoLoop/web/convidados/` resp
 
 ## Limitações conhecidas (a validar)
 
-- O cabeçalho CORS das respostas do Apps Script é aceito pelos navegadores atuais. Confirme no celular real (primeiro item da Fase 1).
+- Não há mais CORS: a página e o envio rodam dentro do próprio Apps Script (`google.script.run`).
+- Limite de tamanho do `google.script.run` não documentado: testar uma foto de 10 a 12 MB (Fase 6).
 - A conversão de HEIC no notebook depende do `pillow-heif`. Ele foi testado no Linux, mas não no Windows.

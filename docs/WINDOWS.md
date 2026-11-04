@@ -21,7 +21,7 @@ Testado em desenvolvimento no Linux Mint. Ainda **não** foi executado num noteb
    - `pasta_drive`: o caminho da pasta do Drive. Exemplo: `G:\\Meu Drive\\FotoLoop - Lucia 60 anos`
    - `pasta_backup`: uma pasta **fora** do Drive. Exemplo: `C:\\FotoLoop\\backup`
    - `senha_painel`: uma senha sua (não use a do exemplo)
-   - `url_convidados`: `https://bugijo.github.io/FotoLoop/web/convidados/`
+   - `url_convidados`: o endereço `/exec` do Apps Script (o mesmo do QR Code)
 3. Salve e feche.
 
 As barras invertidas precisam ser duplas (`\\`) dentro do JSON.

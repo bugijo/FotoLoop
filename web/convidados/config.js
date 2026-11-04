@@ -1,6 +1,5 @@
-// Configuração da página dos convidados.
-// Cole aqui a URL do Google Apps Script publicado (termina em /exec).
-// Veja docs/CONFIGURAR_APPS_SCRIPT.md.
+// Endereço da página dos convidados publicada pelo Apps Script.
+// Cole a URL do aplicativo da web (termina em /exec). Veja docs/CONFIGURAR_APPS_SCRIPT.md.
 window.FOTOLOOP_CONFIG = {
-  endpoint: ''
+  paginaApps: ''
 };

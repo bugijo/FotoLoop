@@ -7,7 +7,7 @@ Projeto da festa de **60 anos da Lúcia (07/11/2026)**. Feito para ser gratuito:
 ## Como funciona
 
 ```
-Celular do convidado ──► Página (web/convidados) ──► Google Apps Script ──► Google Drive (pasta privada)
+Celular do convidado ──► Página servida pelo Google Apps Script ──► google.script.run ──► Google Drive (pasta privada)
                                                                                     │
                                                   Google Drive para computador (notebook Windows)
                                                                                     │
@@ -23,8 +23,8 @@ Celular do convidado ──► Página (web/convidados) ──► Google Apps Sc
 
 | Pasta / arquivo | Conteúdo |
 |---|---|
-| `apps_script/` | Receptor das fotos (Google Apps Script): `Code.gs` e `appsscript.json` |
-| `web/convidados/` | Página dos convidados (celular) |
+| `apps_script/` | Página dos convidados e recebimento das fotos (Google Apps Script): `Code.gs`, `Convidados.html`, `Estilo.html`, `Script.html`, `appsscript.json` |
+| `web/convidados/` | Redirecionamento no GitHub Pages para a página do Apps Script |
 | `web/telao/` | Telão (projetor) |
 | `web/painel/` | Painel do organizador |
 | `fotoloop/` | Núcleo em Python: fila, velocidade, numeração, conversão, sincronização e servidor |
