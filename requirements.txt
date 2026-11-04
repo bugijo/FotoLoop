@@ -1,0 +1,4 @@
+# Dependências do telão (Windows 10/11 e Linux). Instalação: pip install -r requirements.txt
+Pillow>=10.0
+pillow-heif>=0.16
+qrcode>=7.4

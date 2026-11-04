@@ -1,0 +1,14 @@
+{
+  "pasta_drive": "C:\\Users\\SEU_USUARIO\\Google Drive\\FotoLoop - Lucia 60 anos",
+  "pasta_backup": "C:\\FotoLoop\\backup",
+  "porta": 8080,
+  "acesso_na_rede": false,
+  "senha_painel": "TROQUE-ESTA-SENHA",
+  "modo_automatico": true,
+  "tempo_fixo_segundos": 8,
+  "max_lado_projetor": 1920,
+  "max_novas_seguidas": 30,
+  "antigas_entre_novas": 2,
+  "intervalo_varredura_segundos": 5,
+  "url_convidados": "https://bugijo.github.io/FotoLoop/web/convidados/"
+}
