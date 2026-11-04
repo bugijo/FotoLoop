@@ -20,6 +20,12 @@ Total: **57 testes, todos aprovados** na última execução (cerca de 12 s).
 
 Teste de fumaça com o servidor real (`run.py`) e fotos de exemplo: sincronização, numeração, JPEG do projetor, API do telão, senha do painel, QR Code e controle de recebimento. Executado: OK.
 
+Página dos convidados, executada no navegador em largura de celular (375 px): layout, prévia de foto, recusa de arquivo que não é imagem, aviso de página não configurada. Executado: OK.
+
+Protocolo de envio: a página foi testada contra um receptor **simulado** (não é o Apps Script). Ele recebeu `text/plain` com os campos `nome`, `tipo`, `tamanho`, `sha256` e `dados`, com assinatura JPEG e hash corretos. Executado: OK.
+
+GitHub Pages publicado: `https://bugijo.github.io/FotoLoop/web/convidados/` responde 200. A página ainda não envia fotos até `config.js` receber a URL do Apps Script.
+
 ## Manual (ainda não executado)
 
 ### Fase 1 — prova funcional
