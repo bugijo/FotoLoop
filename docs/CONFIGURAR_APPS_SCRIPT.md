@@ -17,12 +17,14 @@ Esta etapa é feita **uma vez**, com a conta Google do proprietário (a mesma do
 
    | Arquivo no editor | Tipo | Conteúdo (copie de `apps_script/`) |
    |---|---|---|
-   | `Code` (já existe; é o `Código.gs`) | Script | `Code.gs` (apague o que estiver lá antes de colar) |
+   | `Code` (já existe; é o `Código.gs`) | Script | `Code.gs` |
    | `Convidados` | HTML | `Convidados.html` |
    | `Estilo` | HTML | `Estilo.html` |
    | `Script` | HTML | `Script.html` |
 
-   Ao criar `Convidados`, `Estilo` e `Script` como HTML, o Apps Script acrescenta `.html` sozinho. Não cole as tags `<style>`/`<script>` do arquivo `Estilo.html` e `Script.html`: elas já estão lá.
+   Para cada arquivo: **selecione todo o conteúdo que já estiver no editor e substitua pelo conteúdo do arquivo do repositório**, sem remover nem acrescentar nada. Os arquivos `Estilo.html` e `Script.html` já trazem as próprias tags `<style>` e `<script>`, e elas devem ficar exatamente como estão no repositório. Não envolva esses arquivos em outra tag.
+
+   Ao criar `Convidados`, `Estilo` e `Script` como HTML, o Apps Script acrescenta `.html` sozinho. O `Code.gs` precisa conter a função `include`, que insere `Estilo` e `Script` dentro de `Convidados`. Ela já está em `Code.gs`.
 
 4. Abra **Configurações do projeto** (engrenagem) e marque **Mostrar o arquivo de manifesto appsscript.json**. Volte a **Editor**, abra `appsscript.json` e substitua o conteúdo pelo de `apps_script/appsscript.json`. Salve (Ctrl+S).
 

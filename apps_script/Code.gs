@@ -56,6 +56,14 @@ function doGet(e) {
 }
 
 /**
+ * Usada pelos modelos HTML: <?!= include('Estilo'); ?> insere o conteúdo do arquivo.
+ * Estilo.html e Script.html já trazem suas próprias tags <style> e <script>.
+ */
+function include(nome) {
+  return HtmlService.createHtmlOutputFromFile(nome).getContent();
+}
+
+/**
  * Chamada pela página com google.script.run. Só devolve ok:true e verificado:true
  * depois de confirmar que o arquivo existe no Drive com o tamanho correto.
  */

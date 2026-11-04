@@ -43,6 +43,34 @@ class AppsScriptTest(unittest.TestCase):
         for nome in re.findall(r"include\('([^']+)'\)", modelo):
             self.assertTrue((APPS / f"{nome}.html").exists(), nome)
 
+    def test_funcao_include_existe_no_codigo(self):
+        codigo = ler("Code.gs")
+        self.assertRegex(codigo, r"function include\(nome\)")
+        self.assertIn("HtmlService.createHtmlOutputFromFile(nome).getContent()", codigo)
+
+    def test_template_completo_expande_sem_scriptlet_restante(self):
+        # Simula o que o Apps Script faz em createTemplateFromFile('Convidados').evaluate():
+        # cada <?!= include('X'); ?> é trocado pelo conteúdo de X.html.
+        modelo = ler("Convidados.html")
+        expandido = re.sub(r"<\?!=\s*include\('([^']+)'\);\s*\?>",
+                           lambda m: ler(f"{m.group(1)}.html"), modelo)
+        self.assertNotIn("<?", expandido)
+        self.assertNotIn("?>", expandido)
+        self.assertEqual(expandido.count("<style>"), 1)
+        self.assertEqual(expandido.count("<script>"), 1)
+        self.assertIn("google.script.run", expandido)
+
+    def test_arquivos_de_include_trazem_suas_proprias_tags(self):
+        self.assertTrue(ler("Estilo.html").lstrip().startswith("<style>"))
+        self.assertTrue(ler("Script.html").lstrip().startswith("<script>"))
+
+    def test_modelo_principal_usa_as_inclusoes_sem_repetir_tags(self):
+        modelo = ler("Convidados.html")
+        self.assertIn("<?!= include('Estilo'); ?>", modelo)
+        self.assertIn("<?!= include('Script'); ?>", modelo)
+        self.assertNotIn("<style>", modelo)
+        self.assertNotIn("<script>", modelo)
+
     @unittest.skipUnless(shutil.which("node"), "node não instalado")
     def test_sintaxe_javascript_do_apps_script(self):
         with tempfile.TemporaryDirectory() as pasta:
