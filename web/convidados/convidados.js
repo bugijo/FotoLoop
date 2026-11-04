@@ -1,0 +1,226 @@
+(function () {
+  'use strict';
+
+  var CONFIG = window.FOTOLOOP_CONFIG || {};
+  var TAMANHO_MAXIMO = 12 * 1024 * 1024;
+  var TEMPO_LIMITE_MS = 120000;
+
+  var MENSAGENS = {
+    recebimento_encerrado: 'O envio de fotos já foi encerrado. Obrigada por participar!',
+    limite_temporario: 'Muitos envios ao mesmo tempo. Aguarde um minuto e tente de novo.',
+    arquivo_grande: 'Essa foto é muito grande. Escolha outra, por favor.',
+    arquivo_vazio: 'Essa foto está vazia. Escolha outra, por favor.',
+    formato_invalido: 'Esse arquivo não é uma foto compatível. Use JPG, PNG, WebP ou HEIC.',
+    pedido_invalido: 'Não recebemos sua foto. Tente de novo.',
+    pagina_nao_configurada: 'A página ainda não está pronta. Avise a organização da festa.',
+    falha_envio: 'Sem conexão com a internet. Verifique o sinal e tente de novo.'
+  };
+
+  var estado = { arquivo: null, tipo: null, urlPrevia: null, enviando: false, codigoErro: null };
+
+  function $(id) { return document.getElementById(id); }
+
+  function mostrarTela(nome) {
+    ['inicio', 'previa', 'envio', 'sucesso', 'erro'].forEach(function (t) {
+      $('tela-' + t).hidden = t !== nome;
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function liberarPrevia() {
+    if (estado.urlPrevia) {
+      URL.revokeObjectURL(estado.urlPrevia);
+      estado.urlPrevia = null;
+    }
+  }
+
+  function reiniciar() {
+    liberarPrevia();
+    estado.arquivo = null;
+    estado.tipo = null;
+    estado.codigoErro = null;
+    $('previa').hidden = true;
+    $('previa').removeAttribute('src');
+    $('previa-indisponivel').hidden = true;
+    mostrarTela('inicio');
+  }
+
+  function lerBytes(blob) {
+    return new Promise(function (resolver, rejeitar) {
+      var leitor = new FileReader();
+      leitor.onload = function () { resolver(new Uint8Array(leitor.result)); };
+      leitor.onerror = function () { rejeitar(leitor.error); };
+      leitor.readAsArrayBuffer(blob);
+    });
+  }
+
+  // Confere a assinatura do arquivo; a extensão e o tipo informados pelo celular não são confiáveis.
+  function detectarTipo(b) {
+    if (b.length < 12) return null;
+    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return { mime: 'image/jpeg', preview: true };
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return { mime: 'image/png', preview: true };
+    if (texto(b, 0, 4) === 'RIFF' && texto(b, 8, 4) === 'WEBP') return { mime: 'image/webp', preview: true };
+    if (texto(b, 4, 4) === 'ftyp') {
+      var marca = texto(b, 8, 4);
+      if (['heic', 'heix', 'hevc', 'heim', 'heis', 'mif1', 'msf1'].indexOf(marca) !== -1) {
+        return { mime: 'image/heic', preview: false };
+      }
+    }
+    return null;
+  }
+
+  function texto(b, inicio, tamanho) {
+    var s = '';
+    for (var i = inicio; i < inicio + tamanho; i++) s += String.fromCharCode(b[i]);
+    return s;
+  }
+
+  function aoEscolherArquivo(evento) {
+    var entrada = evento.target;
+    var arquivo = entrada.files && entrada.files[0];
+    entrada.value = '';
+    if (!arquivo) return;
+
+    if (arquivo.size === 0) return mostrarErro('arquivo_vazio');
+    if (arquivo.size > TAMANHO_MAXIMO) return mostrarErro('arquivo_grande');
+
+    lerBytes(arquivo.slice(0, 16)).then(function (cabecalho) {
+      var tipo = detectarTipo(cabecalho);
+      if (!tipo) return mostrarErro('formato_invalido');
+      mostrarPrevia(arquivo, tipo);
+    }, function () {
+      mostrarErro('pedido_invalido');
+    });
+  }
+
+  function mostrarPrevia(arquivo, tipo) {
+    liberarPrevia();
+    estado.arquivo = arquivo;
+    estado.tipo = tipo;
+
+    var imagem = $('previa');
+    var aviso = $('previa-indisponivel');
+    imagem.hidden = true;
+    aviso.hidden = true;
+
+    if (tipo.preview) {
+      estado.urlPrevia = URL.createObjectURL(arquivo);
+      imagem.onload = function () { imagem.hidden = false; };
+      imagem.onerror = function () { imagem.hidden = true; aviso.hidden = false; };
+      imagem.src = estado.urlPrevia;
+    } else {
+      // HEIC: só alguns navegadores mostram a prévia; o envio funciona do mesmo jeito.
+      aviso.hidden = false;
+      imagem.onload = function () { imagem.hidden = false; aviso.hidden = true; };
+      imagem.onerror = function () { imagem.hidden = true; aviso.hidden = false; };
+      estado.urlPrevia = URL.createObjectURL(arquivo);
+      imagem.src = estado.urlPrevia;
+    }
+    mostrarTela('previa');
+  }
+
+  function sha256Hex(bytes) {
+    if (!window.crypto || !window.crypto.subtle) return Promise.resolve('');
+    return crypto.subtle.digest('SHA-256', bytes).then(function (buffer) {
+      return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
+        return ('0' + b.toString(16)).slice(-2);
+      }).join('');
+    }).catch(function () { return ''; });
+  }
+
+  function paraBase64(bytes) {
+    var partes = [];
+    for (var i = 0; i < bytes.length; i += 0x8000) {
+      partes.push(String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)));
+    }
+    return btoa(partes.join(''));
+  }
+
+  function enviarPedido(pedido) {
+    var controle = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var temporizador = setTimeout(function () { if (controle) controle.abort(); }, TEMPO_LIMITE_MS);
+    return fetch(CONFIG.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(pedido),
+      signal: controle ? controle.signal : undefined
+    }).then(function (resposta) {
+      return resposta.json();
+    }).then(function (dados) {
+      clearTimeout(temporizador);
+      return dados;
+    }, function (erro) {
+      clearTimeout(temporizador);
+      throw erro;
+    });
+  }
+
+  function enviar() {
+    if (estado.enviando || !estado.arquivo) return;
+    if (!CONFIG.endpoint) return mostrarErro('pagina_nao_configurada');
+
+    estado.enviando = true;
+    mostrarTela('envio');
+
+    var arquivo = estado.arquivo;
+    var tipo = estado.tipo;
+
+    lerBytes(arquivo)
+      .then(function (bytes) {
+        return sha256Hex(bytes).then(function (sha256) {
+          return {
+            nome: arquivo.name || 'foto',
+            tipo: tipo.mime,
+            tamanho: bytes.length,
+            sha256: sha256,
+            dados: paraBase64(bytes)
+          };
+        });
+      })
+      .then(enviarPedido)
+      .then(function (resposta) {
+        if (!resposta || !resposta.ok) {
+          throw { codigo: (resposta && resposta.codigo) || 'pedido_invalido' };
+        }
+        mostrarSucesso(resposta.duplicada);
+      })
+      .catch(function (erro) {
+        mostrarErro((erro && erro.codigo) || 'falha_envio');
+      })
+      .then(function () {
+        estado.enviando = false;
+      });
+  }
+
+  function mostrarSucesso(duplicada) {
+    liberarPrevia();
+    estado.arquivo = null;
+    $('mensagem-sucesso').textContent = duplicada
+      ? 'Esta foto já estava no álbum. Obrigada!'
+      : 'Sua foto já está a caminho do telão. Obrigada por participar!';
+    mostrarTela('sucesso');
+  }
+
+  function mostrarErro(codigo) {
+    estado.codigoErro = codigo;
+    $('mensagem-erro').textContent = MENSAGENS[codigo] || MENSAGENS.falha_envio;
+    mostrarTela('erro');
+  }
+
+  function aoTentarNovamente() {
+    if (estado.arquivo) {
+      mostrarTela('previa');
+    } else {
+      reiniciar();
+    }
+  }
+
+  $('btn-camera').addEventListener('click', function () { $('entrada-camera').click(); });
+  $('btn-galeria').addEventListener('click', function () { $('entrada-galeria').click(); });
+  $('entrada-camera').addEventListener('change', aoEscolherArquivo);
+  $('entrada-galeria').addEventListener('change', aoEscolherArquivo);
+  $('btn-enviar').addEventListener('click', enviar);
+  $('btn-cancelar').addEventListener('click', reiniciar);
+  $('btn-outra').addEventListener('click', reiniciar);
+  $('btn-tentar').addEventListener('click', aoTentarNovamente);
+})();
