@@ -1,0 +1,161 @@
+:root {
+  --rosa: #ff3d9a;
+  --rosa-escuro: #b0126a;
+  --preto: #1a0a14;
+  --fundo: #fff0f7;
+  --dourado: #ffd54a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--preto);
+  background: var(--fundo);
+}
+
+.painel {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h1 {
+  margin: 8px 0 0;
+  color: var(--rosa-escuro);
+  font-size: 1.6rem;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  color: var(--rosa-escuro);
+}
+
+.cartao {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(176, 18, 106, .12);
+}
+
+.cartao form { display: flex; flex-direction: column; gap: 10px; }
+
+input[type="password"], input[type="number"] {
+  font-size: 1.1rem;
+  padding: 10px;
+  border: 2px solid #f1b8d6;
+  border-radius: 10px;
+  max-width: 220px;
+}
+
+label { font-weight: 600; }
+
+.marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.botoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.botao {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  min-height: 56px;
+  padding: 12px 16px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  background: var(--preto);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.botao:disabled { opacity: .5; cursor: wait; }
+
+.botao.secundario { background: var(--rosa); }
+
+.linha-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+}
+
+.pequeno { font-size: .95rem; margin: 6px 0; }
+
+.erro { color: #b00020; font-weight: 700; margin: 0; }
+
+.mensagem {
+  position: sticky;
+  bottom: 12px;
+  background: var(--preto);
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 0;
+}
+
+.qrcode { max-width: 260px; margin-bottom: 12px; }
+.qrcode img { width: 100%; height: auto; display: block; }
+
+.galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.foto {
+  background: #faf5f8;
+  border-radius: 12px;
+  padding: 6px;
+  text-align: center;
+  font-size: .85rem;
+}
+
+.foto img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #222;
+  border-radius: 8px;
+}
+
+.foto.oculta { opacity: .5; }
+
+.foto button {
+  margin-top: 6px;
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dourado);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.foto .falha { color: #b00020; font-weight: 700; }
+
+.atual { font-weight: 800; }
+
+/* Impressão: só o QR Code e o título. */
+@media print {
+  body { background: #fff; }
+  .naoimprimir,
+  .painel > *:not(#conteudo),
+  #conteudo > *:not(.cartao-qr) { display: none !important; }
+  .cartao-qr { display: block !important; box-shadow: none; }
+  .qrcode { max-width: 110mm; margin: 0 auto; }
+}

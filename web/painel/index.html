@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>FotoLoop — Painel do organizador</title>
+  <link rel="stylesheet" href="/painel/painel.css">
+</head>
+<body>
+  <main class="painel">
+    <h1>FotoLoop — Painel</h1>
+
+    <section id="entrada" class="cartao">
+      <form id="formulario-senha">
+        <label for="senha">Senha do painel</label>
+        <input id="senha" type="password" autocomplete="current-password" required>
+        <button type="submit" class="botao">Entrar</button>
+        <p id="erro-senha" class="erro" hidden></p>
+      </form>
+    </section>
+
+    <div id="conteudo" hidden>
+      <section class="cartao">
+        <h2>Apresentação</h2>
+        <div class="linha-status">
+          <span id="status-foto">—</span>
+          <span id="status-fotos">—</span>
+        </div>
+        <div class="botoes">
+          <button class="botao" data-acao="iniciar">Iniciar</button>
+          <button class="botao" data-acao="pausar">Pausar</button>
+          <button class="botao" data-acao="continuar">Continuar</button>
+          <button class="botao" data-acao="avancar">Avançar foto</button>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <h2>Velocidade</h2>
+        <label class="marcar"><input id="modo-auto" type="checkbox"> Velocidade automática</label>
+        <label class="marcar">Tempo fixo (segundos):
+          <input id="tempo-fixo" type="number" min="3" max="60" value="8">
+        </label>
+        <button id="salvar-velocidade" class="botao">Salvar velocidade</button>
+      </section>
+
+      <section class="cartao">
+        <h2>Recebimento de fotos</h2>
+        <p id="texto-recebimento"></p>
+        <button id="btn-recebimento" class="botao">Alternar recebimento</button>
+      </section>
+
+      <section class="cartao">
+        <h2>Sincronização e backup</h2>
+        <p id="texto-sincronizacao" class="pequeno"></p>
+        <p id="texto-falhas" class="pequeno"></p>
+        <button id="btn-backup" class="botao secundario">Abrir pasta de backup</button>
+      </section>
+
+      <section class="cartao cartao-qr">
+        <h2>QR Code para os convidados</h2>
+        <div id="qrcode" class="qrcode"></div>
+        <button id="btn-imprimir" class="botao secundario">Imprimir QR Code</button>
+      </section>
+
+      <section class="cartao">
+        <h2>Fotos recebidas (<span id="contagem">0</span>)</h2>
+        <p class="pequeno">Ocultar tira a foto do telão, mas o original continua guardado no backup.</p>
+        <div id="galeria" class="galeria"></div>
+      </section>
+
+      <p id="mensagem" class="mensagem" role="status" hidden></p>
+    </div>
+  </main>
+
+  <script src="/painel/painel.js"></script>
+</body>
+</html>
