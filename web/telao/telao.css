@@ -1,8 +1,14 @@
+/*
+ * Telão no visual do convite: preto, pink neon e bordas grunge.
+ * Tudo é desenhado numa tela de 1920 × 1080; --u vale 1 px dessa tela e encolhe
+ * ou cresce junto com o projetor, mantendo a proporção 16:9.
+ * Nada aqui depende de internet: fontes do sistema e artes em /telao/arte/.
+ */
 :root {
-  --rosa: #ff3d9a;
-  --rosa-escuro: #7a0b45;
-  --preto: #120610;
-  --dourado: #ffd54a;
+  --u: calc(min(100vw, 177.7778vh) / 1920);
+  --fundo: #070203;
+  --rosa: #ff1f8f;
+  --rosa-claro: #ffc4e2;
   --branco: #ffffff;
 }
 
@@ -12,71 +18,167 @@ html, body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: var(--preto);
+  background: #000;
   color: var(--branco);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
 }
 
 body {
+  display: grid;
+  place-items: center;
+}
+
+.tela {
+  position: relative;
+  width: calc(var(--u) * 1920);
+  height: calc(var(--u) * 1080);
+  overflow: hidden;
   background:
-    repeating-linear-gradient(100deg, rgba(255,255,255,.04) 0 3px, transparent 3px 40px),
-    radial-gradient(circle at 50% 0%, #ff5fae 0%, #b0126a 45%, var(--preto) 100%);
-  display: flex;
-  flex-direction: column;
+    url(arte/borda-topo.jpg) center top / 100% calc(var(--u) * 40) no-repeat,
+    url(arte/borda-base.jpg) center bottom / 100% calc(var(--u) * 40) no-repeat,
+    url(arte/borda-esq.jpg) left top / calc(var(--u) * 30) auto repeat-y,
+    url(arte/borda-dir.jpg) right top / calc(var(--u) * 30) auto repeat-y,
+    var(--fundo); /* mesmo preto do fundo das artes, para não aparecer emenda */
 }
 
-.faixa {
+/* ---------- Fundo decorativo ---------- */
+
+.arte {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* A Lúcia do convite, uma de cada lado. A foto dos convidados passa por cima quando precisa de largura. */
+.lucia { z-index: 1; top: calc(var(--u) * 205); width: calc(var(--u) * 570); height: auto; }
+.lucia-esq { left: calc(var(--u) * 120); }
+.lucia-dir { right: calc(var(--u) * 120); }
+
+/* Artes sobre fundo preto: "lighten" deixa o preto delas invisível sobre o que estiver atrás. */
+.guitarra, .globo, .titulo, .frase { mix-blend-mode: lighten; }
+
+.guitarra { z-index: 2; left: 0; bottom: 0; height: calc(var(--u) * 800); width: auto; }
+.globo { z-index: 2; right: 0; bottom: 0; height: calc(var(--u) * 330); width: auto; }
+
+.titulo {
+  z-index: 3;
+  top: calc(var(--u) * 8);
+  left: 50%;
+  width: calc(var(--u) * 760);
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.frase {
+  z-index: 3;
+  bottom: calc(var(--u) * 16);
+  left: 50%;
+  width: calc(var(--u) * 620);
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.estrela {
+  z-index: 3;
+  bottom: calc(var(--u) * 44);
+  width: calc(var(--u) * 46);
+  height: calc(var(--u) * 46);
+  fill: none;
+  stroke: var(--rosa);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 calc(var(--u) * 6) var(--rosa));
+}
+.estrela-esq { left: calc(var(--u) * 580); }
+.estrela-dir { right: calc(var(--u) * 580); }
+
+/* ---------- Foto principal ---------- */
+
+/*
+ * Área máxima entre as colunas de miniaturas, o título e a frase.
+ * A foto ocupa toda a altura e só a largura que a proporção dela pede:
+ * vertical fica estreita e a Lúcia aparece dos dois lados; horizontal se estende sobre ela.
+ */
+.centro {
+  position: absolute;
+  z-index: 4;
+  left: calc(var(--u) * 196);
+  right: calc(var(--u) * 196);
+  top: calc(var(--u) * 252);
+  bottom: calc(var(--u) * 120);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 1.2vw;
-  padding: 1.2vh 2vw 0.8vh;
-  text-shadow: 0 3px 0 var(--rosa-escuro);
 }
 
-.faixa-nome {
-  font-size: 4.2vh;
+.principal {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  background: #000;
+  border: calc(var(--u) * 4) solid var(--rosa-claro);
+  border-radius: calc(var(--u) * 22);
+  box-shadow:
+    0 0 0 calc(var(--u) * 2) rgba(255,31,143,.9),
+    0 0 calc(var(--u) * 24) rgba(255,31,143,.75),
+    0 0 calc(var(--u) * 60) rgba(255,31,143,.35);
+  transition: opacity .5s ease, transform .5s ease;
+}
+
+.principal.oculta { opacity: 0; transform: scale(.985); }
+
+.principal[src=""], .principal:not([src]) { visibility: hidden; }
+
+.vazio {
+  position: absolute;
+  max-width: calc(var(--u) * 560); /* cabe entre as duas Lúcias */
+  margin: 0;
+  padding: calc(var(--u) * 26) calc(var(--u) * 40);
+  line-height: 1.2;
+  border: calc(var(--u) * 3) solid var(--rosa-claro);
+  border-radius: calc(var(--u) * 26);
+  background: rgba(7,2,3,.82);
+  box-shadow: 0 0 calc(var(--u) * 24) rgba(255,31,143,.7);
+  font-family: "Segoe UI Black", "Arial Black", "Segoe UI", system-ui, sans-serif;
+  font-size: calc(var(--u) * 50);
   font-weight: 900;
-  letter-spacing: .12em;
-  color: var(--dourado);
-  -webkit-text-stroke: 1px var(--preto);
+  text-align: center;
+  text-shadow: 0 0 calc(var(--u) * 12) rgba(255,31,143,.9);
 }
 
-.faixa-anos {
-  font-size: 2.4vh;
-  font-weight: 800;
-  letter-spacing: .2em;
-}
+.centro:has(.principal[src]:not([src=""])) .vazio { display: none; }
 
-.palco {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: 1.6vw;
-  padding: 1vh 2vw 2.5vh;
-}
+/* ---------- Miniaturas: 4 anteriores à esquerda, 4 próximas à direita ---------- */
 
-/* Colunas laterais só ocupam espaço quando têm fotos: nada quebrado quando faltam imagens. */
 .lateral {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--u) * 156);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2.2vh;
-  flex: 0 0 16vw;
-  min-height: 0;
+  gap: calc(var(--u) * 30);
 }
-
-.lateral:empty { display: none; }
+.lateral-esq { left: calc(var(--u) * 22); }
+.lateral-dir { right: calc(var(--u) * 22); }
 
 .mini {
   position: relative;
-  height: 19vh;
-  padding: .8vh;
-  border-radius: 12px;
-  background: rgba(255,255,255,.12);
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+  flex: 0 0 auto;
+  width: 100%;
+  height: calc(var(--u) * 156); /* quadrado fixo: a foto não define a altura da caixa */
+  padding: calc(var(--u) * 6);
+  border: calc(var(--u) * 2.5) solid rgba(255,170,215,.95);
+  border-radius: calc(var(--u) * 18);
+  background: #080104;
+  box-shadow:
+    0 0 calc(var(--u) * 12) rgba(255,31,143,.7),
+    inset 0 0 calc(var(--u) * 10) rgba(255,31,143,.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,69 +189,22 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: 8px;
-  background: var(--preto);
+  border-radius: calc(var(--u) * 10);
 }
 
-.mini.antiga { opacity: .7; }
+/* Só a foto fica mais apagada; a caixa continua opaca para o fundo não aparecer através. */
+.mini.antiga img { opacity: .78; }
 
 .mini span {
   position: absolute;
-  bottom: .6vh;
-  right: .9vw;
-  font-size: 1.6vh;
+  bottom: calc(var(--u) * 6);
+  right: calc(var(--u) * 8);
+  padding: calc(var(--u) * 2) calc(var(--u) * 8);
+  border-radius: calc(var(--u) * 8);
+  background: rgba(0,0,0,.7);
+  font-size: calc(var(--u) * 18);
   font-weight: 800;
-  background: rgba(0,0,0,.55);
-  padding: .2vh .6vw;
-  border-radius: 6px;
 }
-
-.centro {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quadro {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.2vh;
-  border-radius: 22px;
-  background: rgba(0,0,0,.25);
-  box-shadow: 0 14px 40px rgba(0,0,0,.5), inset 0 0 0 6px rgba(255,255,255,.9);
-}
-
-.principal {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border-radius: 14px;
-  transition: opacity .5s ease, transform .5s ease;
-}
-
-.principal.oculta { opacity: 0; transform: scale(.98); }
-
-.principal[src=""], .principal:not([src]) { visibility: hidden; }
-
-.vazio {
-  position: absolute;
-  margin: 0;
-  font-size: 4.5vh;
-  font-weight: 900;
-  text-align: center;
-  padding: 0 4vw;
-  text-shadow: 0 4px 0 var(--rosa-escuro);
-}
-
-.quadro:has(.principal[src]:not([src=""])) .vazio { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .principal, .mini { transition: none; }
